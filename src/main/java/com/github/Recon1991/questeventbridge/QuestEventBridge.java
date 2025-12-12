@@ -37,14 +37,9 @@ public class QuestEventBridge {
         // Do not add this line if there are no @SubscribeEvent-annotated functions in this class, like onServerStarting() below.
         NeoForge.EVENT_BUS.register(this);
 
-        ModLoadingContext.get().registerConfig(
-                ModConfig.Type.COMMON,
-                BridgeConfig.COMMON_SPEC
-        );
+        modContainer.registerConfig(ModConfig.Type.COMMON, BridgeConfig.COMMON_SPEC);
 
         NeoForge.EVENT_BUS.register(TradeTracker.class);
-
-
 
         // Register the item to a creative tab
         // modEventBus.addListener(this::addCreative);
