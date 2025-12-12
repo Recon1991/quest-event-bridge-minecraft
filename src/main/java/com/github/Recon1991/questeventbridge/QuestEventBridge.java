@@ -1,13 +1,16 @@
-package com.mayview.practicemod;
+package com.github.Recon1991.questeventbridge;
 
+import com.github.Recon1991.questeventbridge.event.TradeTracker;
 import com.mojang.logging.LogUtils;
 import net.minecraft.world.item.CreativeModeTabs;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.ModContainer;
+import net.neoforged.fml.ModLoadingContext;
 import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.fml.common.Mod;
+import net.neoforged.fml.config.ModConfig;
 import net.neoforged.fml.event.lifecycle.FMLClientSetupEvent;
 import net.neoforged.fml.event.lifecycle.FMLCommonSetupEvent;
 import net.neoforged.neoforge.common.NeoForge;
@@ -16,14 +19,15 @@ import net.neoforged.neoforge.event.server.ServerStartingEvent;
 import org.slf4j.Logger;
 
 // The value here should match an entry in the META-INF/neoforge.mods.toml file
-@Mod(Mayviewmod.MOD_ID)
-public class Mayviewmod {
-    public static final String MOD_ID = "somemayviewmod";
+@Mod(QuestEventBridge.MOD_ID)
+public class QuestEventBridge {
+
+    public static final String MOD_ID = "questeventbridge";
     private static final Logger LOGGER = LogUtils.getLogger();
 
     // The constructor for the mod class is the first code run when your mod is loaded.
     // FML will recognize some parameter types like IEventBus or ModContainer and pass them in automatically.
-    public Mayviewmod(IEventBus modEventBus, ModContainer modContainer)
+    public QuestEventBridge(IEventBus modEventBus, ModContainer modContainer)
     {
         // Register the commonSetup method for modloading
         modEventBus.addListener(this::commonSetup);
@@ -33,8 +37,17 @@ public class Mayviewmod {
         // Do not add this line if there are no @SubscribeEvent-annotated functions in this class, like onServerStarting() below.
         NeoForge.EVENT_BUS.register(this);
 
+        ModLoadingContext.get().registerConfig(
+                ModConfig.Type.COMMON,
+                BridgeConfig.COMMON_SPEC
+        );
+
+        NeoForge.EVENT_BUS.register(TradeTracker.class);
+
+
+
         // Register the item to a creative tab
-        modEventBus.addListener(this::addCreative);
+        // modEventBus.addListener(this::addCreative);
 
         // Register our mod's ModConfigSpec so that FML can create and load the config file for us
         // modContainer.registerConfig(ModConfig.Type.COMMON, Config.SPEC);
