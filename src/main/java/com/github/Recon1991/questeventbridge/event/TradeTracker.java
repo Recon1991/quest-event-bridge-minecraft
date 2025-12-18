@@ -1,6 +1,7 @@
 package com.github.Recon1991.questeventbridge.event;
 
 import com.github.Recon1991.questeventbridge.BridgeConfig;
+import net.minecraft.nbt.CompoundTag;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.npc.AbstractVillager;
 import net.minecraft.world.entity.npc.Villager;
@@ -11,8 +12,11 @@ import org.slf4j.LoggerFactory;
 
 public class TradeTracker {
 
-    private static final Logger LOGGER =
-            LoggerFactory.getLogger("QuestEventBridge");
+    private static final Logger LOGGER = LoggerFactory.getLogger("QuestEventBridge");
+
+    private static final String ROOT = "qeb";
+    private static final String TOTAL_KEY = "trades_total";
+    private static final String BY_PROF_KEY = "trades_by_profession";
 
     @SubscribeEvent
     public static void onTrade(TradeWithVillagerEvent event) {
@@ -21,23 +25,51 @@ public class TradeTracker {
         AbstractVillager av = event.getAbstractVillager();
         if (!(av instanceof Villager villager)) return; // ignore wandering traders
 
-        String prefix = BridgeConfig.COMMON.tradeKeyPrefix.get();
-        String professionId =
-                villager.getVillagerData().getProfession().toString(); // minecraft:librarian
+        // Profession id like "minecraft:librarian"
+        final String professionId = villager.getVillagerData().getProfession().toString();
 
-        String key = prefix + professionId;
+        // Prefix from config (e.g., "mayview.trade.")
+        final String prefix = safePrefix();
+        final String profKey = prefix + professionId;
 
-        var data = player.getPersistentData();
-        int newValue = data.getInt(key) + 1;
-        data.putInt(key, newValue + 1);
+        final CompoundTag pData = player.getPersistentData();
 
+        // Root compound
+        final CompoundTag root = pData.getCompound(ROOT);
+        pData.put(ROOT, root);
+
+        // Total trades
+        final int newTotal = root.getInt(TOTAL_KEY) + 1;
+        root.putInt(TOTAL_KEY, newTotal);
+
+        // Trades by profession
+        final CompoundTag byProf = root.getCompound(BY_PROF_KEY);
+        root.put(BY_PROF_KEY, byProf);
+
+        final int newProfCount = byProf.getInt(profKey) + 1;
+        byProf.putInt(profKey, newProfCount);
+
+        // Write back
+        root.put(BY_PROF_KEY, byProf);
+        pData.put(ROOT, root);
+
+        // Optional logging
         if (BridgeConfig.COMMON.logEvents.get()) {
-            LOGGER.info(
-                    "[TradeTracker] {} traded with {} (count={})",
+            LOGGER.info("[QEB] Trade tracked: player={}, profKey={}, profCount={}, total={}",
                     player.getGameProfile().getName(),
-                    professionId,
-                    newValue
+                    profKey,
+                    newProfCount,
+                    newTotal
             );
+        }
+    }
+
+    private static String safePrefix() {
+        try {
+            String p = BridgeConfig.COMMON.tradeKeyPrefix.get();
+            return (p == null) ? "" : p;
+        } catch (Throwable t) {
+            return "";
         }
     }
 }

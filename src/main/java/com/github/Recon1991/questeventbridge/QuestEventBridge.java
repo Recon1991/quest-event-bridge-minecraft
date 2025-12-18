@@ -1,5 +1,6 @@
 package com.github.Recon1991.questeventbridge;
 
+import com.github.Recon1991.questeventbridge.command.QebCommands;
 import com.github.Recon1991.questeventbridge.event.TradeTracker;
 import com.mojang.logging.LogUtils;
 import net.minecraft.world.item.CreativeModeTabs;
@@ -7,7 +8,6 @@ import net.neoforged.api.distmarker.Dist;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.ModContainer;
-import net.neoforged.fml.ModLoadingContext;
 import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.fml.common.Mod;
 import net.neoforged.fml.config.ModConfig;
@@ -15,6 +15,7 @@ import net.neoforged.fml.event.lifecycle.FMLClientSetupEvent;
 import net.neoforged.fml.event.lifecycle.FMLCommonSetupEvent;
 import net.neoforged.neoforge.common.NeoForge;
 import net.neoforged.neoforge.event.BuildCreativeModeTabContentsEvent;
+import net.neoforged.neoforge.event.RegisterCommandsEvent;
 import net.neoforged.neoforge.event.server.ServerStartingEvent;
 import org.slf4j.Logger;
 
@@ -39,6 +40,7 @@ public class QuestEventBridge {
 
         modContainer.registerConfig(ModConfig.Type.COMMON, BridgeConfig.COMMON_SPEC);
 
+        LOGGER.info("[{}] Registering TradeTracker...", MOD_ID);
         NeoForge.EVENT_BUS.register(TradeTracker.class);
 
         // Register the item to a creative tab
@@ -69,6 +71,12 @@ public class QuestEventBridge {
     public void onServerStarting(ServerStartingEvent event)
     {
 
+    }
+
+    @SubscribeEvent
+    public void onRegisterCommands(RegisterCommandsEvent event) {
+        QebCommands.register(event.getDispatcher());
+        LOGGER.info("[{}] QEB commands registered", MOD_ID);
     }
 
     // You can use EventBusSubscriber to automatically register all static methods in the class annotated with @SubscribeEvent

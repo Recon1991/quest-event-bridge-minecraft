@@ -1,6 +1,5 @@
 package com.github.Recon1991.questeventbridge;
 
-import net.neoforged.fml.config.ModConfig;
 import net.neoforged.neoforge.common.ModConfigSpec;
 
 public class BridgeConfig {
@@ -19,6 +18,7 @@ public class BridgeConfig {
 
         public final ModConfigSpec.ConfigValue<String> tradeKeyPrefix;
         public final ModConfigSpec.BooleanValue logEvents;
+        public final ModConfigSpec.IntValue commandPermissionLevel;
 
         Common(ModConfigSpec.Builder builder) {
 
@@ -45,9 +45,7 @@ public class BridgeConfig {
                             "",
                             "Changing this will NOT reset existing data automatically.",
                             "If you change it, old values will remain under the old prefix.",
-                            "",
-                            "Tachikoma wonders...",
-                            "Do unused NBT keys dream of electric garbage collection?"
+                            ""
                     )
                     .define("trade_key_prefix", "mayview.trade.");
 
@@ -58,6 +56,7 @@ public class BridgeConfig {
 
             logEvents = builder
                     .comment(
+                            "",
                             "Enable verbose logging for captured events.",
                             "",
                             "When enabled, the bridge will log each",
@@ -65,11 +64,25 @@ public class BridgeConfig {
                             "",
                             "Warning:",
                             "This can get noisy on active servers.",
-                            "",
-                            "Tachikoma warning:",
-                            "Too much data can be just as blinding as too little."
+                            ""
                     )
                     .define("log_events", false);
+
+            commandPermissionLevel = builder
+                    .comment(
+                            "",
+                            "Permission level required to use /qeb commands.",
+                            "",
+                            "Typical values:",
+                            "  0 = everyone",
+                            "  2 = server operators (recommended)",
+                            "  4 = owners-only / highest",
+                            "",
+                            "Note:",
+                            "Changing this requires a /reload or server restart to be safe.",
+                            "Commands will read this value at runtime."
+                    )
+                    .defineInRange("command_permission_level", 2, 0, 4);
 
             builder.pop();
         }
