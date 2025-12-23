@@ -1,5 +1,19 @@
 {
-  "itemGroup.examplemod": "Example Mod Tab",
-  "block.examplemod.example_block": "Example Block",
-  "item.examplemod.example_item": "Example Item"
+  "ftbquests.task.questeventbridge.trade_task": "Villager Trade Task",
+  "ftbquests.task.questeventbridge.trade_task.tooltip": "Complete by trading with villagers that match the filters.",
+
+  "qeb.task.trade.required": "Trades Required",
+  "qeb.task.trade.required.tooltip": "How many trades are needed to complete the task.",
+
+  "qeb.task.trade.use_total": "Use Total Trades",
+  "qeb.task.trade.use_total.tooltip": "If enabled, counts all villager trades (ignores profession filter).",
+
+  "qeb.task.trade.use_dropdown": "Select Profession From List",
+  "qeb.task.trade.use_dropdown.tooltip": "If enabled, use the dropdown value. If disabled, use the manual field.",
+
+  "qeb.task.trade.profession_dropdown": "Profession (Dropdown)",
+  "qeb.task.trade.profession_dropdown.tooltip": "Pick a profession id from registered villager professions.",
+
+  "qeb.task.trade.profession_manual": "Profession (Manual)",
+  "qeb.task.trade.profession_manual.tooltip": "Type a profession id like minecraft:librarian or mayview:librarian."
 }

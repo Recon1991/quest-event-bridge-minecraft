@@ -1,7 +1,9 @@
 package com.github.Recon1991.questeventbridge.event;
 
 import com.github.Recon1991.questeventbridge.BridgeConfig;
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.npc.AbstractVillager;
 import net.minecraft.world.entity.npc.Villager;
@@ -25,12 +27,13 @@ public class TradeTracker {
         AbstractVillager av = event.getAbstractVillager();
         if (!(av instanceof Villager villager)) return; // ignore wandering traders
 
-        // Profession id like "minecraft:librarian"
-        final String professionId = villager.getVillagerData().getProfession().toString();
+        // Registry key for "minecraft:librarian" (or "mayview:librarian")
+        ResourceLocation rl = BuiltInRegistries.VILLAGER_PROFESSION.getKey(villager.getVillagerData().getProfession());
+        final String professionId = (rl != null)
+                ? rl.toString()
+                : villager.getVillagerData().getProfession().toString();
 
-        // Prefix from config (e.g., "mayview.trade.")
-        final String prefix = safePrefix();
-        final String profKey = prefix + professionId;
+        final String profKey = professionId; // prefix-free, namespaced
 
         final CompoundTag pData = player.getPersistentData();
 
@@ -55,21 +58,12 @@ public class TradeTracker {
 
         // Optional logging
         if (BridgeConfig.COMMON.logEvents.get()) {
-            LOGGER.info("[QEB] Trade tracked: player={}, profKey={}, profCount={}, total={}",
+            LOGGER.info("[QEB] Trade tracked: player={}, profession={}, profCount={}, total={}",
                     player.getGameProfile().getName(),
-                    profKey,
+                    professionId,
                     newProfCount,
                     newTotal
             );
-        }
-    }
-
-    private static String safePrefix() {
-        try {
-            String p = BridgeConfig.COMMON.tradeKeyPrefix.get();
-            return (p == null) ? "" : p;
-        } catch (Throwable t) {
-            return "";
         }
     }
 }

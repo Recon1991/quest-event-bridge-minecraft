@@ -8,6 +8,7 @@ import net.neoforged.api.distmarker.Dist;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.ModContainer;
+import net.neoforged.fml.ModList;
 import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.fml.common.Mod;
 import net.neoforged.fml.config.ModConfig;
@@ -52,7 +53,14 @@ public class QuestEventBridge {
 
     private void commonSetup(final FMLCommonSetupEvent event)
     {
-
+        event.enqueueWork(() -> {
+            if (ModList.get().isLoaded("ftbquests")) {
+                com.github.Recon1991.questeventbridge.ftbq.QebTaskTypes.init();
+                LOGGER.info("[{}] FTB Quests detected: QEB task types registered", MOD_ID);
+            } else {
+                LOGGER.info("[{}] FTB Quests not present: skipping task type registration", MOD_ID);
+            }
+        });
     }
 
     // Add the example block item to the building blocks tab

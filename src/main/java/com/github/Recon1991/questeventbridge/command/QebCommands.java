@@ -4,7 +4,6 @@ import com.github.Recon1991.questeventbridge.BridgeConfig;
 import com.github.Recon1991.questeventbridge.QuestEventBridge;
 import com.mojang.logging.LogUtils;
 import com.mojang.brigadier.CommandDispatcher;
-import com.mojang.brigadier.arguments.IntegerArgumentType;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.builder.ArgumentBuilder;
 import net.minecraft.commands.CommandSourceStack;
@@ -86,55 +85,80 @@ public class QebCommands {
                     LOGGER.debug("[{}] /qeb reset_trades used by {}", QuestEventBridge.MOD_ID, player.getGameProfile().getName());
                     return 1;
                 })
-                // /qeb reset_trades <professionKey>
-                .then(Commands.argument("professionKey", StringArgumentType.greedyString())
+                // /qeb reset_trades <professionId>
+                .then(Commands.argument("professionId", StringArgumentType.greedyString())
                         .executes(ctx -> {
                             CommandSourceStack source = ctx.getSource();
                             ServerPlayer player = source.getPlayerOrException();
 
-                            String key = StringArgumentType.getString(ctx, "professionKey").trim();
+                            String id = StringArgumentType.getString(ctx, "professionId").trim();
 
-                            boolean existed = resetProfessionTrade(player, key);
+                            boolean existed = resetProfessionTrade(player, id);
 
                             if (existed) {
-                                source.sendSuccess(() -> Component.literal("[QEB] Reset trades for profession key: " + key), false);
+                                source.sendSuccess(() -> Component.literal("[QEB] Reset trades for profession: " + id), false);
                             } else {
-                                source.sendSuccess(() -> Component.literal("[QEB] No entry found for profession key: " + key), false);
+                                source.sendSuccess(() -> Component.literal("[QEB] No entry found for profession: " + id), false);
                             }
 
-                            LOGGER.debug("[{}] /qeb reset_trades {} used by {}", QuestEventBridge.MOD_ID, key, player.getGameProfile().getName());
+                            LOGGER.debug("[{}] /qeb reset_trades {} used by {}", QuestEventBridge.MOD_ID, id, player.getGameProfile().getName());
                             return 1;
                         })
                 );
     }
 
+    /**
+     * /qeb set_trades <professionId> <value>
+     * We use greedyString and parse the last token as an int so resource IDs like "minecraft:librarian"
+     * always work (and we avoid Brigadier "word" quirks around ':').
+     */
     private static ArgumentBuilder<CommandSourceStack, ?> setTradesBuilder() {
         return Commands.literal("set_trades")
-                .then(Commands.argument("professionKey", StringArgumentType.word())
-                        .then(Commands.argument("value", IntegerArgumentType.integer(0))
-                                .executes(ctx -> {
-                                    CommandSourceStack source = ctx.getSource();
-                                    ServerPlayer player = source.getPlayerOrException();
+                .then(Commands.argument("args", StringArgumentType.greedyString())
+                        .executes(ctx -> {
+                            CommandSourceStack source = ctx.getSource();
+                            ServerPlayer player = source.getPlayerOrException();
 
-                                    String key = StringArgumentType.getString(ctx, "professionKey").trim();
-                                    int value = IntegerArgumentType.getInteger(ctx, "value");
+                            String raw = StringArgumentType.getString(ctx, "args").trim();
+                            if (raw.isEmpty()) {
+                                source.sendFailure(Component.literal("[QEB] Usage: /qeb set_trades <professionId> <value>"));
+                                return 0;
+                            }
 
-                                    int oldValue = setProfessionTrade(player, key, value);
+                            String[] parts = raw.split("\\s+");
+                            if (parts.length < 2) {
+                                source.sendFailure(Component.literal("[QEB] Usage: /qeb set_trades <professionId> <value>"));
+                                return 0;
+                            }
 
-                                    source.sendSuccess(() ->
-                                                    Component.literal("[QEB] Set trades for " + key + ": " + oldValue + " -> " + value),
-                                            false
-                                    );
+                            String professionId = parts[0].trim();
+                            String valueStr = parts[1].trim();
 
-                                    LOGGER.debug("[{}] /qeb set_trades {} {} used by {}",
-                                            QuestEventBridge.MOD_ID, key, value, player.getGameProfile().getName());
-                                    return 1;
-                                })
-                        )
+                            int value;
+                            try {
+                                value = Integer.parseInt(valueStr);
+                                if (value < 0) value = 0;
+                            } catch (NumberFormatException e) {
+                                source.sendFailure(Component.literal("[QEB] Value must be a non-negative integer."));
+                                return 0;
+                            }
+
+                            int oldValue = setProfessionTrade(player, professionId, value);
+                            final int finalValue = value;
+
+                            source.sendSuccess(() ->
+                                            Component.literal("[QEB] Set trades for " + professionId + ": " + oldValue + " -> " + finalValue),
+                                    false
+                            );
+
+                            LOGGER.debug("[{}] /qeb set_trades {} {} used by {}",
+                                    QuestEventBridge.MOD_ID, professionId, value, player.getGameProfile().getName());
+                            return 1;
+                        })
                 )
                 // Friendly usage if args missing
                 .executes(ctx -> {
-                    ctx.getSource().sendFailure(Component.literal("[QEB] Usage: /qeb set_trades <professionKey> <value>"));
+                    ctx.getSource().sendFailure(Component.literal("[QEB] Usage: /qeb set_trades <professionId> <value>"));
                     return 0;
                 });
     }
@@ -156,9 +180,9 @@ public class QebCommands {
     }
 
     /**
-     * @return true if the key existed and was removed, false otherwise
+     * @return true if the id existed and was removed, false otherwise
      */
-    private static boolean resetProfessionTrade(ServerPlayer player, String professionKey) {
+    private static boolean resetProfessionTrade(ServerPlayer player, String professionId) {
         CompoundTag pData = player.getPersistentData();
 
         CompoundTag root = pData.getCompound(ROOT);
@@ -167,8 +191,8 @@ public class QebCommands {
         CompoundTag byProf = root.getCompound(BY_PROF_KEY);
         root.put(BY_PROF_KEY, byProf);
 
-        boolean existed = byProf.contains(professionKey);
-        byProf.remove(professionKey);
+        boolean existed = byProf.contains(professionId);
+        byProf.remove(professionId);
 
         root.put(BY_PROF_KEY, byProf);
         pData.put(ROOT, root);
@@ -180,9 +204,9 @@ public class QebCommands {
      * Sets a profession trade count to an exact value.
      * Also adjusts trades_total by the delta so totals stay roughly consistent.
      *
-     * @return the previous value for this profession key
+     * @return the previous value for this profession id
      */
-    private static int setProfessionTrade(ServerPlayer player, String professionKey, int newValue) {
+    private static int setProfessionTrade(ServerPlayer player, String professionId, int newValue) {
         CompoundTag pData = player.getPersistentData();
 
         CompoundTag root = pData.getCompound(ROOT);
@@ -193,9 +217,9 @@ public class QebCommands {
         CompoundTag byProf = root.getCompound(BY_PROF_KEY);
         root.put(BY_PROF_KEY, byProf);
 
-        int oldValue = byProf.getInt(professionKey);
+        int oldValue = byProf.getInt(professionId);
 
-        byProf.putInt(professionKey, newValue);
+        byProf.putInt(professionId, newValue);
 
         int delta = newValue - oldValue;
         int newTotal = total + delta;
