@@ -24,14 +24,19 @@ public class QebTradeTask extends Task {
     private static final String TOTAL_KEY = "trades_total";
     private static final String BY_PROF_KEY = "trades_by_profession";
     private static final String DEFAULT_PROF = "minecraft:librarian";
+    private static final String DEFAULT_ITEM = "minecraft:emerald";
+    private static final String BY_OUT_KEY = "trades_by_output";
+    private static final String BY_PROF_OUT_KEY = "trades_by_profession_and_output";
 
     private int required = 10;
     private boolean useTotal = false;
 
     // Dropdown + manual dual-mode
     private boolean useDropdown = true;
+    private boolean useWantedItem = false;          // toggle so old quests keep working
     private String professionDropdown = DEFAULT_PROF;
     private String professionManual = DEFAULT_PROF;
+    private String wantedItem = DEFAULT_ITEM;       // resource id string
 
     public QebTradeTask(long id, Quest quest) {
         super(id, quest);
@@ -65,15 +70,37 @@ public class QebTradeTask extends Task {
         return p.isEmpty() ? DEFAULT_PROF : p;
     }
 
+    private String effectiveWantedItem() {
+        if (!useWantedItem) return null;
+        String s = wantedItem;
+        if (s == null) return DEFAULT_ITEM;
+        s = s.trim();
+        return s.isEmpty() ? DEFAULT_ITEM : s;
+    }
+
     private long readProgressFromPlayer(ServerPlayer player) {
         CompoundTag root = player.getPersistentData().getCompound(ROOT);
 
+        String wanted = effectiveWantedItem(); // null if useWantedItem=false
+
         if (useTotal) {
-            return root.getInt(TOTAL_KEY);
+            if (wanted == null) {
+                return root.getInt(TOTAL_KEY);
+            }
+            CompoundTag byOut = root.getCompound(BY_OUT_KEY);
+            return byOut.getInt(wanted);
         }
 
-        CompoundTag byProf = root.getCompound(BY_PROF_KEY);
-        return byProf.getInt(effectiveProfession());
+        String prof = effectiveProfession();
+
+        if (wanted == null) {
+            CompoundTag byProf = root.getCompound(BY_PROF_KEY);
+            return byProf.getInt(prof);
+        }
+
+        CompoundTag byProfOut = root.getCompound(BY_PROF_OUT_KEY);
+        CompoundTag profBucket = byProfOut.getCompound(prof);
+        return profBucket.getInt(wanted);
     }
 
     @Override
@@ -84,6 +111,8 @@ public class QebTradeTask extends Task {
         buffer.writeBoolean(useDropdown);
         buffer.writeUtf(professionDropdown, Short.MAX_VALUE);
         buffer.writeUtf(professionManual, Short.MAX_VALUE);
+        buffer.writeBoolean(useWantedItem);
+        buffer.writeUtf(wantedItem, Short.MAX_VALUE);
     }
 
     @Override
@@ -94,11 +123,14 @@ public class QebTradeTask extends Task {
         useDropdown = buffer.readBoolean();
         professionDropdown = buffer.readUtf(Short.MAX_VALUE);
         professionManual = buffer.readUtf(Short.MAX_VALUE);
+        useWantedItem = buffer.readBoolean();
+        wantedItem = buffer.readUtf(Short.MAX_VALUE);
 
         // sanitize
         if (required <= 0) required = 1;
         if (professionDropdown == null || professionDropdown.isBlank()) professionDropdown = DEFAULT_PROF;
         if (professionManual == null || professionManual.isBlank()) professionManual = DEFAULT_PROF;
+        if (wantedItem == null || wantedItem.isBlank()) wantedItem = DEFAULT_ITEM;
     }
 
     @Override
@@ -130,7 +162,6 @@ public class QebTradeTask extends Task {
                 .name(s -> Component.literal(s)) // can prettify later
                 .create();
 
-        // Dropdown selector (uses NameMap, NOT EnumConfig)
         config.addEnum(
                 "profession_dropdown",
                 professionDropdown,
@@ -139,12 +170,17 @@ public class QebTradeTask extends Task {
                 defaultId
         ).setNameKey("qeb.task.trade.profession_dropdown");
 
-        // Manual fallback
         config.addString("profession_manual", professionManual, v -> professionManual = v, DEFAULT_PROF)
                 .setNameKey("qeb.task.trade.profession_manual");
 
         config.addInt("required", required, v -> required = v, 10, 1, Integer.MAX_VALUE)
                 .setNameKey("qeb.task.trade.required");
+
+        config.addBool("use_wanted_item", useWantedItem, v -> useWantedItem = v, false)
+                .setNameKey("qeb.task.trade.use_wanted_item");
+
+        config.addString("wanted_item", wantedItem, v -> wantedItem = v, DEFAULT_ITEM)
+                .setNameKey("qeb.task.trade.wanted_item");
 
         config.addBool("use_total", useTotal, v -> useTotal = v, false)
                 .setNameKey("qeb.task.trade.use_total");
@@ -160,6 +196,9 @@ public class QebTradeTask extends Task {
         nbt.putBoolean("use_dropdown", useDropdown);
         nbt.putString("profession_dropdown", professionDropdown);
         nbt.putString("profession_manual", professionManual);
+
+        nbt.putBoolean("use_wanted_item", useWantedItem);
+        nbt.putString("wanted_item", wantedItem);
     }
 
     @Override
@@ -178,10 +217,15 @@ public class QebTradeTask extends Task {
         professionManual = nbt.contains("profession_manual")
                 ? nbt.getString("profession_manual")
                 : DEFAULT_PROF;
+        useWantedItem = nbt.contains("use_wanted_item") && nbt.getBoolean("use_wanted_item");
+        wantedItem = nbt.contains("wanted_item") ? nbt.getString("wanted_item") : DEFAULT_ITEM;
 
         // sanitize
         if (required <= 0) required = 1;
         if (professionDropdown == null || professionDropdown.isBlank()) professionDropdown = DEFAULT_PROF;
         if (professionManual == null || professionManual.isBlank()) professionManual = DEFAULT_PROF;
+        if (wantedItem == null || wantedItem.isBlank()) wantedItem = DEFAULT_ITEM;
+        if (wantedItem != null) wantedItem = wantedItem.trim();
+
     }
 }
