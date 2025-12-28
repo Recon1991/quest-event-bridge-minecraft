@@ -289,9 +289,10 @@ public class QebCommands {
                             }
 
                             int oldValue = setOutputTrade(player, itemId, value);
+                            final int finalValue = value;
 
                             source.sendSuccess(() ->
-                                            Component.literal("[QEB] Set output count for " + itemId + ": " + oldValue + " -> " + value),
+                                            Component.literal("[QEB] Set output count for " + itemId + ": " + oldValue + " -> " + finalValue),
                                     false
                             );
 
@@ -339,9 +340,10 @@ public class QebCommands {
                             }
 
                             int oldValue = setProfessionOutputTrade(player, professionId, itemId, value);
+                            final int finalValue = value;
 
                             source.sendSuccess(() ->
-                                            Component.literal("[QEB] Set prof_output count for " + professionId + " -> " + itemId + ": " + oldValue + " -> " + value),
+                                            Component.literal("[QEB] Set prof_output count for " + professionId + " -> " + itemId + ": " + oldValue + " -> " + finalValue),
                                     false
                             );
 
@@ -518,6 +520,7 @@ public class QebCommands {
         return oldValue;
     }
 
+    @SuppressWarnings("unused")
     private static boolean resetOutputTrade(ServerPlayer player, String itemId) {
         CompoundTag pData = player.getPersistentData();
         CompoundTag root = pData.getCompound(ROOT);
@@ -534,6 +537,7 @@ public class QebCommands {
         return existed;
     }
 
+    @SuppressWarnings("unused")
     private static boolean resetProfessionOutputTrade(ServerPlayer player, String professionId, String itemId) {
         CompoundTag pData = player.getPersistentData();
         CompoundTag root = pData.getCompound(ROOT);
