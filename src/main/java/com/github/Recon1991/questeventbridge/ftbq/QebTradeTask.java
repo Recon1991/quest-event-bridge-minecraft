@@ -20,6 +20,7 @@ import java.util.Comparator;
 
 public class QebTradeTask extends Task {
 
+    // --- All the strings ---
     private static final String ROOT = "qeb";
     private static final String TOTAL_KEY = "trades_total";
     private static final String BY_PROF_KEY = "trades_by_profession";
@@ -27,6 +28,8 @@ public class QebTradeTask extends Task {
     private static final String DEFAULT_ITEM = "minecraft:emerald";
     private static final String BY_OUT_KEY = "trades_by_output";
     private static final String BY_PROF_OUT_KEY = "trades_by_profession_and_output";
+    private static final String BY_OUT_AMT_KEY = "trades_by_output_amount";
+    private static final String BY_PROF_OUT_AMT_KEY = "trades_by_profession_and_output_amount";
 
     private int required = 10;
     private boolean useTotal = false;
@@ -70,6 +73,10 @@ public class QebTradeTask extends Task {
         return p.isEmpty() ? DEFAULT_PROF : p;
     }
 
+    private boolean useWantedItemCountMode = false;
+    // false = TRADE_SUCCESS (existing)
+    // true  = OUTPUT_COUNT (new)
+
     private String effectiveWantedItem() {
         if (!useWantedItem) return null;
         String s = wantedItem;
@@ -83,24 +90,29 @@ public class QebTradeTask extends Task {
 
         String wanted = effectiveWantedItem(); // null if useWantedItem=false
 
+        // Total Successful Trade Count
         if (useTotal) {
-            if (wanted == null) {
-                return root.getInt(TOTAL_KEY);
+            if (wanted == null) return root.getInt(TOTAL_KEY);
+
+            if (!useWantedItemCountMode) {
+                return root.getCompound(BY_OUT_KEY).getInt(wanted);
+            } else {
+                return root.getCompound(BY_OUT_AMT_KEY).getInt(wanted);
             }
-            CompoundTag byOut = root.getCompound(BY_OUT_KEY);
-            return byOut.getInt(wanted);
         }
 
         String prof = effectiveProfession();
 
         if (wanted == null) {
-            CompoundTag byProf = root.getCompound(BY_PROF_KEY);
-            return byProf.getInt(prof);
+            return root.getCompound(BY_PROF_KEY).getInt(prof);
         }
 
-        CompoundTag byProfOut = root.getCompound(BY_PROF_OUT_KEY);
-        CompoundTag profBucket = byProfOut.getCompound(prof);
-        return profBucket.getInt(wanted);
+        // Successful Trade Output Amount Count
+        if (!useWantedItemCountMode) {
+            return root.getCompound(BY_PROF_OUT_KEY).getCompound(prof).getInt(wanted);
+        } else {
+            return root.getCompound(BY_PROF_OUT_AMT_KEY).getCompound(prof).getInt(wanted);
+        }
     }
 
     @Override
@@ -113,6 +125,7 @@ public class QebTradeTask extends Task {
         buffer.writeUtf(professionManual, Short.MAX_VALUE);
         buffer.writeBoolean(useWantedItem);
         buffer.writeUtf(wantedItem, Short.MAX_VALUE);
+        buffer.writeBoolean(useWantedItemCountMode);
     }
 
     @Override
@@ -125,6 +138,7 @@ public class QebTradeTask extends Task {
         professionManual = buffer.readUtf(Short.MAX_VALUE);
         useWantedItem = buffer.readBoolean();
         wantedItem = buffer.readUtf(Short.MAX_VALUE);
+        useWantedItemCountMode = buffer.readBoolean();
 
         // sanitize
         if (required <= 0) required = 1;
@@ -184,7 +198,10 @@ public class QebTradeTask extends Task {
 
         config.addBool("use_total", useTotal, v -> useTotal = v, false)
                 .setNameKey("qeb.task.trade.use_total");
-    }
+
+        config.addBool("use_wanted_item_output_count", useWantedItemCountMode, v -> useWantedItemCountMode = v, false)
+                .setNameKey("qeb.task.trade.use_wanted_item_output_count");
+        }
 
     @Override
     public void writeData(CompoundTag nbt, net.minecraft.core.HolderLookup.Provider provider) {
@@ -199,6 +216,7 @@ public class QebTradeTask extends Task {
 
         nbt.putBoolean("use_wanted_item", useWantedItem);
         nbt.putString("wanted_item", wantedItem);
+        nbt.putBoolean("use_wanted_item_output_count", useWantedItemCountMode);
     }
 
     @Override
@@ -219,6 +237,7 @@ public class QebTradeTask extends Task {
                 : DEFAULT_PROF;
         useWantedItem = nbt.contains("use_wanted_item") && nbt.getBoolean("use_wanted_item");
         wantedItem = nbt.contains("wanted_item") ? nbt.getString("wanted_item") : DEFAULT_ITEM;
+        useWantedItemCountMode = nbt.contains("use_wanted_item_output_count") && nbt.getBoolean("use_wanted_item_output_count");
 
         // sanitize
         if (required <= 0) required = 1;

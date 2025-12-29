@@ -23,6 +23,8 @@ public class TradeTracker {
     private static final String BY_PROF_KEY = "trades_by_profession";
     private static final String BY_OUT_KEY = "trades_by_output";
     private static final String BY_PROF_OUT_KEY = "trades_by_profession_and_output";
+    private static final String BY_OUT_AMT_KEY = "trades_by_output_amount";
+    private static final String BY_PROF_OUT_AMT_KEY = "trades_by_profession_and_output_amount";
 
     @SubscribeEvent
     public static void onTrade(TradeWithVillagerEvent event) {
@@ -49,22 +51,22 @@ public class TradeTracker {
 
         final CompoundTag pData = player.getPersistentData();
 
-        // Root compound
+        // --- Root compound ---
         final CompoundTag root = pData.getCompound(ROOT);
         pData.put(ROOT, root);
 
-        // Total trades
+        // --- Total trades ---
         final int newTotal = root.getInt(TOTAL_KEY) + 1;
         root.putInt(TOTAL_KEY, newTotal);
 
-        // Trades by profession
+        // --- Trades by profession ---
         final CompoundTag byProf = root.getCompound(BY_PROF_KEY);
         root.put(BY_PROF_KEY, byProf);
 
         final int newProfCount = byProf.getInt(profKey) + 1;
         byProf.putInt(profKey, newProfCount);
 
-        // --- NEW: Trades by output (any profession) ---
+        // --- Trades by output (any profession) ---
         final CompoundTag byOut = root.getCompound(BY_OUT_KEY);
         root.put(BY_OUT_KEY, byOut);
 
@@ -72,7 +74,7 @@ public class TradeTracker {
             byOut.putInt(outId, byOut.getInt(outId) + 1);
         }
 
-        // --- NEW: Trades by profession + output ---
+        // --- Trades by profession + output ---
         final CompoundTag byProfOut = root.getCompound(BY_PROF_OUT_KEY);
         root.put(BY_PROF_OUT_KEY, byProfOut);
 
@@ -83,6 +85,25 @@ public class TradeTracker {
             profBucket.putInt(outId, profBucket.getInt(outId) + 1);
         }
 
+        int outCount = result.getCount();
+        // --- Output AMOUNT (sum of stack counts) ---
+        final CompoundTag byOutAmt = root.getCompound(BY_OUT_AMT_KEY);
+        root.put(BY_OUT_AMT_KEY, byOutAmt);
+
+        if (!outId.isEmpty()) {
+            byOutAmt.putInt(outId, byOutAmt.getInt(outId) + outCount);
+        }
+
+        // --- Profession + output AMOUNT ---
+        final CompoundTag byProfOutAmt = root.getCompound(BY_PROF_OUT_AMT_KEY);
+        root.put(BY_PROF_OUT_AMT_KEY, byProfOutAmt);
+
+        final CompoundTag profAmtBucket = byProfOutAmt.getCompound(profKey);
+        byProfOutAmt.put(profKey, profAmtBucket);
+
+        if (!outId.isEmpty()) {
+            profAmtBucket.putInt(outId, profAmtBucket.getInt(outId) + outCount);
+        }
 
         root.putString("last_trade_output", outId);
         root.putString("last_trade_profession", professionId); // optional but nice

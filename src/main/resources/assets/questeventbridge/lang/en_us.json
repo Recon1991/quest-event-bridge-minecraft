@@ -2,7 +2,7 @@
   "ftbquests.task.questeventbridge.trade_task": "Villager Trade Task",
   "ftbquests.task.questeventbridge.trade_task.tooltip": "Complete by trading with villagers that match the filters.",
 
-  "qeb.task.trade.required": "Trades Required",
+  "qeb.task.trade.required": "Trade/Item Count",
   "qeb.task.trade.required.tooltip": "How many trades are needed to complete the task.",
 
   "qeb.task.trade.use_total": "Use Total Trades",
@@ -17,9 +17,15 @@
   "qeb.task.trade.profession_manual": "Profession (Manual)",
   "qeb.task.trade.profession_manual.tooltip": "Type a profession ID like minecraft:librarian or mayview:librarian.",
 
-  "qeb.task.trade.use_wanted_item": "Use Trade Output Item",
+  "qeb.task.trade.use_wanted_item": "Output Item",
   "qeb.task.trade.use_wanted_item.tooltip": "If enabled, use the Trade Output Item",
 
-  "qeb.task.trade.wanted_item": "Trade Output Item",
-  "qeb.task.trade.wanted_item.tooltip": "Pick an Item ID from the trade output"
+  "qeb.task.trade.wanted_item": "Output Item",
+  "qeb.task.trade.wanted_item.tooltip": "Item ID of the trade output",
+
+  "qeb.task.trade.use_wanted_item_output_count": "Output Item Count",
+  "qeb.task.trade.use_wanted_item_output_count.tooltip": "If enabled, use the Trade Success of Output",
+
+  "qeb.task.trade.wanted_item_output_count": "Output Item Count",
+  "qeb.task.trade.wanted_item_output_count.tooltip": "Item ID of the trade output"
 }

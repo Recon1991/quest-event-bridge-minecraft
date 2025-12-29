@@ -25,6 +25,8 @@ public class QebCommands {
     private static final String BY_PROF_KEY = "trades_by_profession";
     private static final String BY_OUT_KEY = "trades_by_output";
     private static final String BY_PROF_OUT_KEY = "trades_by_profession_and_output";
+    private static final String BY_OUT_AMT_KEY = "trades_by_output_amount";
+    private static final String BY_PROF_OUT_AMT_KEY = "trades_by_profession_and_output_amount";
 
     /** Reads permission level from config; falls back to 2 if config isn't available yet. **/
     private static int permLevel() {
@@ -463,6 +465,8 @@ public class QebCommands {
         root.put(BY_PROF_KEY, new CompoundTag());
         root.put(BY_OUT_KEY, new CompoundTag());
         root.put(BY_PROF_OUT_KEY, new CompoundTag());
+        root.put(BY_OUT_AMT_KEY, new CompoundTag());
+        root.put(BY_PROF_OUT_AMT_KEY, new CompoundTag());
 
         pData.put(ROOT, root);
     }
