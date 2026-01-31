@@ -23,6 +23,10 @@ public class QebCommands {
     private static final String ROOT = "qeb";
     private static final String TOTAL_KEY = "trades_total";
     private static final String BY_PROF_KEY = "trades_by_profession";
+    private static final String BY_IN_KEY = "trades_by_input";
+    private static final String BY_PROF_IN_KEY = "trades_by_profession_and_input";
+    private static final String BY_IN_AMT_KEY = "trades_by_input_amount";
+    private static final String BY_PROF_IN_AMT_KEY = "trades_by_profession_and_input_amount";
     private static final String BY_OUT_KEY = "trades_by_output";
     private static final String BY_PROF_OUT_KEY = "trades_by_profession_and_output";
     private static final String BY_OUT_AMT_KEY = "trades_by_output_amount";
@@ -52,6 +56,8 @@ public class QebCommands {
                         .then(setTradesBuilder())
                         .then(setOutputBuilder())
                         .then(setProfOutputBuilder())
+                        .then(setInputBuilder())
+                        .then(setProfInputBuilder())
         );
     }
 
@@ -194,6 +200,165 @@ public class QebCommands {
                                     source.sendSuccess(() -> Component.literal("[QEB] prof_output for " + prof + ":"), false);
                                     for (String outId : keysSortedByIntDesc(bucket)) {
                                         source.sendSuccess(() -> Component.literal(" - " + outId + " = " + bucket.getInt(outId)), false);
+                                    }
+                                    return 1;
+                                })
+                        )
+                )
+
+                // /qeb trades input
+                .then(Commands.literal("input")
+                        .executes(ctx -> {
+                            CommandSourceStack source = ctx.getSource();
+                            ServerPlayer player = source.getPlayerOrException();
+
+                            CompoundTag root = player.getPersistentData().getCompound(ROOT);
+                            CompoundTag byIn = root.getCompound(BY_IN_KEY);
+
+                            if (byIn.isEmpty()) {
+                                source.sendSuccess(() -> Component.literal("[QEB] trades_by_input is empty."), false);
+                                return 1;
+                            }
+
+                            source.sendSuccess(() -> Component.literal("[QEB] trades_by_input (top 15):"), false);
+
+                            int shown = 0;
+                            for (String key : keysSortedByIntDesc(byIn)) {
+                                source.sendSuccess(() -> Component.literal(" - " + key + " = " + byIn.getInt(key)), false);
+                                if (++shown >= 15) break;
+                            }
+
+                            int remaining = byIn.getAllKeys().size() - shown;
+                            if (remaining > 0) {
+                                source.sendSuccess(() -> Component.literal(" ... (" + remaining + " more)"), false);
+                                source.sendSuccess(() -> Component.literal(" Tip: /qeb trades input all"), false);
+                            }
+
+                            return 1;
+                        })
+
+                        // /qeb trades input all
+                        .then(Commands.literal("all")
+                                .executes(ctx -> {
+                                    CommandSourceStack source = ctx.getSource();
+                                    ServerPlayer player = source.getPlayerOrException();
+
+                                    CompoundTag root = player.getPersistentData().getCompound(ROOT);
+                                    CompoundTag byIn = root.getCompound(BY_IN_KEY);
+
+                                    if (byIn.isEmpty()) {
+                                        source.sendSuccess(() -> Component.literal("[QEB] trades_by_input is empty."), false);
+                                        return 1;
+                                    }
+
+                                    source.sendSuccess(() -> Component.literal("[QEB] trades_by_input (all):"), false);
+                                    for (String key : keysSortedByIntDesc(byIn)) {
+                                        source.sendSuccess(() -> Component.literal(" - " + key + " = " + byIn.getInt(key)), false);
+                                    }
+                                    return 1;
+                                })
+                        )
+                )
+
+                // /qeb trades input_amount
+                .then(Commands.literal("input_amount")
+                        .executes(ctx -> {
+                            CommandSourceStack source = ctx.getSource();
+                            ServerPlayer player = source.getPlayerOrException();
+
+                            CompoundTag root = player.getPersistentData().getCompound(ROOT);
+                            CompoundTag byInAmt = root.getCompound(BY_IN_AMT_KEY);
+
+                            if (byInAmt.isEmpty()) {
+                                source.sendSuccess(() -> Component.literal("[QEB] trades_by_input_amount is empty."), false);
+                                return 1;
+                            }
+
+                            source.sendSuccess(() -> Component.literal("[QEB] trades_by_input_amount (top 15):"), false);
+
+                            int shown = 0;
+                            for (String key : keysSortedByIntDesc(byInAmt)) {
+                                source.sendSuccess(() -> Component.literal(" - " + key + " = " + byInAmt.getInt(key)), false);
+                                if (++shown >= 15) break;
+                            }
+
+                            int remaining = byInAmt.getAllKeys().size() - shown;
+                            if (remaining > 0) {
+                                source.sendSuccess(() -> Component.literal(" ... (" + remaining + " more)"), false);
+                                source.sendSuccess(() -> Component.literal(" Tip: /qeb trades input_amount all"), false);
+                            }
+
+                            return 1;
+                        })
+
+                        // /qeb trades input_amount all
+                        .then(Commands.literal("all")
+                                .executes(ctx -> {
+                                    CommandSourceStack source = ctx.getSource();
+                                    ServerPlayer player = source.getPlayerOrException();
+
+                                    CompoundTag root = player.getPersistentData().getCompound(ROOT);
+                                    CompoundTag byInAmt = root.getCompound(BY_IN_AMT_KEY);
+
+                                    if (byInAmt.isEmpty()) {
+                                        source.sendSuccess(() -> Component.literal("[QEB] trades_by_input_amount is empty."), false);
+                                        return 1;
+                                    }
+
+                                    source.sendSuccess(() -> Component.literal("[QEB] trades_by_input_amount (all):"), false);
+                                    for (String key : keysSortedByIntDesc(byInAmt)) {
+                                        source.sendSuccess(() -> Component.literal(" - " + key + " = " + byInAmt.getInt(key)), false);
+                                    }
+                                    return 1;
+                                })
+                        )
+                )
+
+                .then(Commands.literal("prof_input")
+                        .executes(ctx -> {
+                            CommandSourceStack source = ctx.getSource();
+                            ServerPlayer player = source.getPlayerOrException();
+
+                            CompoundTag root = player.getPersistentData().getCompound(ROOT);
+                            CompoundTag byProfIn = root.getCompound(BY_PROF_IN_KEY);
+
+                            if (byProfIn.isEmpty()) {
+                                source.sendSuccess(() -> Component.literal("[QEB] trades_by_profession_and_input is empty."), false);
+                                return 1;
+                            }
+
+                            source.sendSuccess(() -> Component.literal("[QEB] prof_input summary (distinct inputs per profession):"), false);
+                            for (String prof : byProfIn.getAllKeys()) {
+                                CompoundTag bucket = byProfIn.getCompound(prof);
+                                int distinct = bucket.getAllKeys().size();
+                                if (distinct > 0) {
+                                    source.sendSuccess(() -> Component.literal(" - " + prof + " -> " + distinct + " inputs"), false);
+                                }
+                            }
+
+                            source.sendSuccess(() -> Component.literal(" Tip: /qeb trades prof_input <professionId>"), false);
+                            return 1;
+                        })
+
+                        .then(Commands.argument("professionId", StringArgumentType.greedyString())
+                                .executes(ctx -> {
+                                    CommandSourceStack source = ctx.getSource();
+                                    ServerPlayer player = source.getPlayerOrException();
+
+                                    String prof = StringArgumentType.getString(ctx, "professionId").trim();
+
+                                    CompoundTag root = player.getPersistentData().getCompound(ROOT);
+                                    CompoundTag byProfIn = root.getCompound(BY_PROF_IN_KEY);
+                                    CompoundTag bucket = byProfIn.getCompound(prof);
+
+                                    if (bucket.isEmpty()) {
+                                        source.sendSuccess(() -> Component.literal("[QEB] No prof_input entries for: " + prof), false);
+                                        return 1;
+                                    }
+
+                                    source.sendSuccess(() -> Component.literal("[QEB] prof_input for " + prof + ":"), false);
+                                    for (String inId : keysSortedByIntDesc(bucket)) {
+                                        source.sendSuccess(() -> Component.literal(" - " + inId + " = " + bucket.getInt(inId)), false);
                                     }
                                     return 1;
                                 })
@@ -360,6 +525,93 @@ public class QebCommands {
                 });
     }
 
+    private static ArgumentBuilder<CommandSourceStack, ?> setInputBuilder() {
+        return Commands.literal("set_input")
+                .then(Commands.argument("args", StringArgumentType.greedyString())
+                        .executes(ctx -> {
+                            CommandSourceStack source = ctx.getSource();
+                            ServerPlayer player = source.getPlayerOrException();
+
+                            String raw = StringArgumentType.getString(ctx, "args").trim();
+                            String[] parts = raw.split("\\s+");
+                            if (parts.length < 2) {
+                                source.sendFailure(Component.literal("[QEB] Usage: /qeb set_input <itemId> <value>"));
+                                return 0;
+                            }
+
+                            String itemId = parts[0].trim();
+                            String valueStr = parts[1].trim();
+
+                            int value;
+                            try {
+                                value = Integer.parseInt(valueStr);
+                                if (value < 0) value = 0;
+                            } catch (NumberFormatException e) {
+                                source.sendFailure(Component.literal("[QEB] Value must be a non-negative integer."));
+                                return 0;
+                            }
+
+                            int oldValue = setInputTrade(player, itemId, value);
+                            final int finalValue = value;
+
+                            source.sendSuccess(() ->
+                                            Component.literal("[QEB] Set input count for " + itemId + ": " + oldValue + " -> " + finalValue),
+                                    false
+                            );
+
+                            return 1;
+                        })
+                )
+                .executes(ctx -> {
+                    ctx.getSource().sendFailure(Component.literal("[QEB] Usage: /qeb set_input <itemId> <value>"));
+                    return 0;
+                });
+    }
+
+    private static ArgumentBuilder<CommandSourceStack, ?> setProfInputBuilder() {
+        return Commands.literal("set_prof_input")
+                .then(Commands.argument("args", StringArgumentType.greedyString())
+                        .executes(ctx -> {
+                            CommandSourceStack source = ctx.getSource();
+                            ServerPlayer player = source.getPlayerOrException();
+
+                            String raw = StringArgumentType.getString(ctx, "args").trim();
+                            String[] parts = raw.split("\\s+");
+                            if (parts.length < 3) {
+                                source.sendFailure(Component.literal("[QEB] Usage: /qeb set_prof_input <professionId> <itemId> <value>"));
+                                return 0;
+                            }
+
+                            String professionId = parts[0].trim();
+                            String itemId = parts[1].trim();
+                            String valueStr = parts[2].trim();
+
+                            int value;
+                            try {
+                                value = Integer.parseInt(valueStr);
+                                if (value < 0) value = 0;
+                            } catch (NumberFormatException e) {
+                                source.sendFailure(Component.literal("[QEB] Value must be a non-negative integer."));
+                                return 0;
+                            }
+
+                            int oldValue = setProfessionInputTrade(player, professionId, itemId, value);
+                            final int finalValue = value;
+
+                            source.sendSuccess(() ->
+                                            Component.literal("[QEB] Set prof_input count for " + professionId + " -> " + itemId + ": " + oldValue + " -> " + finalValue),
+                                    false
+                            );
+
+                            return 1;
+                        })
+                )
+                .executes(ctx -> {
+                    ctx.getSource().sendFailure(Component.literal("[QEB] Usage: /qeb set_prof_input <professionId> <itemId> <value>"));
+                    return 0;
+                });
+    }
+
     private static ArgumentBuilder<CommandSourceStack, ?> resetTradesBuilder() {
         return Commands.literal("reset_trades")
                 // /qeb reset_trades
@@ -463,6 +715,10 @@ public class QebCommands {
 
         root.putInt(TOTAL_KEY, 0);
         root.put(BY_PROF_KEY, new CompoundTag());
+        root.put(BY_IN_KEY, new CompoundTag());
+        root.put(BY_IN_AMT_KEY, new CompoundTag());
+        root.put(BY_PROF_IN_KEY, new CompoundTag());
+        root.put(BY_PROF_IN_AMT_KEY, new CompoundTag());
         root.put(BY_OUT_KEY, new CompoundTag());
         root.put(BY_PROF_OUT_KEY, new CompoundTag());
         root.put(BY_OUT_AMT_KEY, new CompoundTag());
@@ -594,6 +850,154 @@ public class QebCommands {
 
         byProfOut.put(professionId, bucket);
         root.put(BY_PROF_OUT_KEY, byProfOut);
+        pData.put(ROOT, root);
+        return oldValue;
+    }
+
+    @SuppressWarnings("unused")
+    private static boolean resetInputTrade(ServerPlayer player, String itemId) {
+        CompoundTag pData = player.getPersistentData();
+        CompoundTag root = pData.getCompound(ROOT);
+        pData.put(ROOT, root);
+
+        CompoundTag byIn = root.getCompound(BY_IN_KEY);
+        root.put(BY_IN_KEY, byIn);
+
+        boolean existed = byIn.contains(itemId);
+        byIn.remove(itemId);
+
+        root.put(BY_IN_KEY, byIn);
+        pData.put(ROOT, root);
+        return existed;
+    }
+
+    @SuppressWarnings("unused")
+    private static boolean resetProfessionInputTrade(ServerPlayer player, String professionId, String itemId) {
+        CompoundTag pData = player.getPersistentData();
+        CompoundTag root = pData.getCompound(ROOT);
+        pData.put(ROOT, root);
+
+        CompoundTag byProfIn = root.getCompound(BY_PROF_IN_KEY);
+        root.put(BY_PROF_IN_KEY, byProfIn);
+
+        CompoundTag bucket = byProfIn.getCompound(professionId);
+        byProfIn.put(professionId, bucket);
+
+        boolean existed = bucket.contains(itemId);
+        bucket.remove(itemId);
+
+        byProfIn.put(professionId, bucket);
+        root.put(BY_PROF_IN_KEY, byProfIn);
+        pData.put(ROOT, root);
+        return existed;
+    }
+
+    private static int setInputTrade(ServerPlayer player, String itemId, int newValue) {
+        CompoundTag pData = player.getPersistentData();
+        CompoundTag root = pData.getCompound(ROOT);
+        pData.put(ROOT, root);
+
+        CompoundTag byIn = root.getCompound(BY_IN_KEY);
+        root.put(BY_IN_KEY, byIn);
+
+        int oldValue = byIn.getInt(itemId);
+        byIn.putInt(itemId, newValue);
+
+        root.put(BY_IN_KEY, byIn);
+        pData.put(ROOT, root);
+        return oldValue;
+    }
+
+    private static int setProfessionInputTrade(ServerPlayer player, String professionId, String itemId, int newValue) {
+        CompoundTag pData = player.getPersistentData();
+        CompoundTag root = pData.getCompound(ROOT);
+        pData.put(ROOT, root);
+
+        CompoundTag byProfIn = root.getCompound(BY_PROF_IN_KEY);
+        root.put(BY_PROF_IN_KEY, byProfIn);
+
+        CompoundTag bucket = byProfIn.getCompound(professionId);
+        byProfIn.put(professionId, bucket);
+
+        int oldValue = bucket.getInt(itemId);
+        bucket.putInt(itemId, newValue);
+
+        byProfIn.put(professionId, bucket);
+        root.put(BY_PROF_IN_KEY, byProfIn);
+        pData.put(ROOT, root);
+        return oldValue;
+    }
+
+    @SuppressWarnings("unused")
+    private static boolean resetInputAmountTrade(ServerPlayer player, String itemId) {
+        CompoundTag pData = player.getPersistentData();
+        CompoundTag root = pData.getCompound(ROOT);
+        pData.put(ROOT, root);
+
+        CompoundTag byInAmt = root.getCompound(BY_IN_AMT_KEY);
+        root.put(BY_IN_AMT_KEY, byInAmt);
+
+        boolean existed = byInAmt.contains(itemId);
+        byInAmt.remove(itemId);
+
+        root.put(BY_IN_AMT_KEY, byInAmt);
+        pData.put(ROOT, root);
+        return existed;
+    }
+
+    @SuppressWarnings("unused")
+    private static boolean resetProfessionInputAmountTrade(ServerPlayer player, String professionId, String itemId) {
+        CompoundTag pData = player.getPersistentData();
+        CompoundTag root = pData.getCompound(ROOT);
+        pData.put(ROOT, root);
+
+        CompoundTag byProfInAmt = root.getCompound(BY_PROF_IN_AMT_KEY);
+        root.put(BY_PROF_IN_AMT_KEY, byProfInAmt);
+
+        CompoundTag bucket = byProfInAmt.getCompound(professionId);
+        byProfInAmt.put(professionId, bucket);
+
+        boolean existed = bucket.contains(itemId);
+        bucket.remove(itemId);
+
+        byProfInAmt.put(professionId, bucket);
+        root.put(BY_PROF_IN_AMT_KEY, byProfInAmt);
+        pData.put(ROOT, root);
+        return existed;
+    }
+
+    private static int setInputAmountTrade(ServerPlayer player, String itemId, int newValue) {
+        CompoundTag pData = player.getPersistentData();
+        CompoundTag root = pData.getCompound(ROOT);
+        pData.put(ROOT, root);
+
+        CompoundTag byInAmt = root.getCompound(BY_IN_AMT_KEY);
+        root.put(BY_IN_AMT_KEY, byInAmt);
+
+        int oldValue = byInAmt.getInt(itemId);
+        byInAmt.putInt(itemId, newValue);
+
+        root.put(BY_IN_AMT_KEY, byInAmt);
+        pData.put(ROOT, root);
+        return oldValue;
+    }
+
+    private static int setProfessionInputAmountTrade(ServerPlayer player, String professionId, String itemId, int newValue) {
+        CompoundTag pData = player.getPersistentData();
+        CompoundTag root = pData.getCompound(ROOT);
+        pData.put(ROOT, root);
+
+        CompoundTag byProfInAmt = root.getCompound(BY_PROF_IN_AMT_KEY);
+        root.put(BY_PROF_IN_AMT_KEY, byProfInAmt);
+
+        CompoundTag bucket = byProfInAmt.getCompound(professionId);
+        byProfInAmt.put(professionId, bucket);
+
+        int oldValue = bucket.getInt(itemId);
+        bucket.putInt(itemId, newValue);
+
+        byProfInAmt.put(professionId, bucket);
+        root.put(BY_PROF_IN_AMT_KEY, byProfInAmt);
         pData.put(ROOT, root);
         return oldValue;
     }

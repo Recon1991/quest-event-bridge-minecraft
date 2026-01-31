@@ -24,21 +24,49 @@ public class QebTradeTask extends Task {
     private static final String ROOT = "qeb";
     private static final String TOTAL_KEY = "trades_total";
     private static final String BY_PROF_KEY = "trades_by_profession";
+    // --- Default ---
     private static final String DEFAULT_PROF = "minecraft:librarian";
     private static final String DEFAULT_ITEM = "minecraft:emerald";
+    // --- Input counters ---
+    private static final String BY_IN_KEY = "trades_by_input";
+    private static final String BY_IN_AMT_KEY = "trades_by_input_amount";
+    // --- Input Profession counters ---
+    private static final String BY_PROF_IN_KEY = "trades_by_input";
+    private static final String BY_PROF_IN_AMT_KEY = "trades_by_input_amount";
+    // --- Output counters ---
     private static final String BY_OUT_KEY = "trades_by_output";
     private static final String BY_PROF_OUT_KEY = "trades_by_profession_and_output";
+    // --- Output Profession counters ---
     private static final String BY_OUT_AMT_KEY = "trades_by_output_amount";
     private static final String BY_PROF_OUT_AMT_KEY = "trades_by_profession_and_output_amount";
 
+    // Default counter amount
+    // (required) is master count for trade count/amount
     private int required = 10;
+
+    // whether to use (required) for task criteria
     private boolean useTotal = false;
 
-    // Dropdown + manual dual-mode
+    // Dropdown for (Profession) selection + manual dual-mode
     private boolean useDropdown = true;
-    private boolean useWantedItem = false;          // toggle so old quests keep working
+
+    // Enable Wanted Item for Task
+    private boolean useWantedItem = false;
+
+    // Whether to use input (costA/costB) or output(result)
+    private boolean wantedIsInput = false;
+
+    // false = successful trade count (Default)
+    // true  = item amount count - sum of items traded (Toggle)
+    private boolean useWantedItemCountMode = false;
+
+    // Dropdown for Profession Selector List
     private String professionDropdown = DEFAULT_PROF;
+
+    // Input Field for Manual entry of Profession
     private String professionManual = DEFAULT_PROF;
+
+    // Set wanted item ID
     private String wantedItem = DEFAULT_ITEM;       // resource id string
 
     public QebTradeTask(long id, Quest quest) {
@@ -73,10 +101,6 @@ public class QebTradeTask extends Task {
         return p.isEmpty() ? DEFAULT_PROF : p;
     }
 
-    private boolean useWantedItemCountMode = false;
-    // false = TRADE_SUCCESS (existing)
-    // true  = OUTPUT_COUNT (new)
-
     private String effectiveWantedItem() {
         if (!useWantedItem) return null;
         String s = wantedItem;
@@ -90,28 +114,44 @@ public class QebTradeTask extends Task {
 
         String wanted = effectiveWantedItem(); // null if useWantedItem=false
 
+        if (wanted == null) {
+            if (useTotal) {
+                return root.getInt(TOTAL_KEY);
+            }
+            return root.getCompound(BY_PROF_KEY).getInt(effectiveProfession());
+        }
+
+        // set prof to effectiveProfession from Dropdown/Manual
+        String prof = effectiveProfession();
+
         // Total Successful Trade Count
         if (useTotal) {
-            if (wanted == null) return root.getInt(TOTAL_KEY);
-
-            if (!useWantedItemCountMode) {
-                return root.getCompound(BY_OUT_KEY).getInt(wanted);
+            if (wantedIsInput) {
+                return useWantedItemCountMode
+                    ? root.getCompound(BY_IN_AMT_KEY).getInt(wanted)
+                    : root.getCompound(BY_IN_KEY).getInt(wanted);
             } else {
-                return root.getCompound(BY_OUT_AMT_KEY).getInt(wanted);
+                return useWantedItemCountMode
+                    ? root.getCompound(BY_OUT_AMT_KEY).getInt(wanted)
+                    : root.getCompound(BY_OUT_KEY).getInt(wanted);
             }
         }
 
-        String prof = effectiveProfession();
+        // Total Successful Trade Item + Profession Count
+        if (wantedIsInput) {
+            CompoundTag bucket = root.getCompound(BY_PROF_IN_KEY).getCompound(prof);
+            CompoundTag bucketAmount = root.getCompound(BY_PROF_IN_AMT_KEY).getCompound(prof);
 
-        if (wanted == null) {
-            return root.getCompound(BY_PROF_KEY).getInt(prof);
-        }
-
-        // Successful Trade Output Amount Count
-        if (!useWantedItemCountMode) {
-            return root.getCompound(BY_PROF_OUT_KEY).getCompound(prof).getInt(wanted);
+            return useWantedItemCountMode
+                ? bucketAmount.getInt(wanted)
+                : bucket.getInt(wanted);
         } else {
-            return root.getCompound(BY_PROF_OUT_AMT_KEY).getCompound(prof).getInt(wanted);
+            CompoundTag bucket = root.getCompound(BY_PROF_OUT_KEY).getCompound(prof);
+            CompoundTag bucketAmount = root.getCompound(BY_PROF_OUT_AMT_KEY).getCompound(prof);
+
+            return useWantedItemCountMode
+                    ? bucketAmount.getInt(wanted)
+                    : bucket.getInt(wanted);
         }
     }
 
@@ -123,8 +163,11 @@ public class QebTradeTask extends Task {
         buffer.writeBoolean(useDropdown);
         buffer.writeUtf(professionDropdown, Short.MAX_VALUE);
         buffer.writeUtf(professionManual, Short.MAX_VALUE);
+
         buffer.writeBoolean(useWantedItem);
         buffer.writeUtf(wantedItem, Short.MAX_VALUE);
+
+        buffer.writeBoolean(wantedIsInput);
         buffer.writeBoolean(useWantedItemCountMode);
     }
 
@@ -136,8 +179,11 @@ public class QebTradeTask extends Task {
         useDropdown = buffer.readBoolean();
         professionDropdown = buffer.readUtf(Short.MAX_VALUE);
         professionManual = buffer.readUtf(Short.MAX_VALUE);
+
         useWantedItem = buffer.readBoolean();
         wantedItem = buffer.readUtf(Short.MAX_VALUE);
+
+        wantedIsInput = buffer.readBoolean();
         useWantedItemCountMode = buffer.readBoolean();
 
         // sanitize
@@ -184,23 +230,35 @@ public class QebTradeTask extends Task {
                 defaultId
         ).setNameKey("qeb.task.trade.profession_dropdown");
 
+        // Profession Manual Field
         config.addString("profession_manual", professionManual, v -> professionManual = v, DEFAULT_PROF)
                 .setNameKey("qeb.task.trade.profession_manual");
 
+        // ------------------------------------------------------------
+        // --- Master Count for Trade Success or Trade Item Count ---
+        // ------------------------------------------------------------
         config.addInt("required", required, v -> required = v, 10, 1, Integer.MAX_VALUE)
                 .setNameKey("qeb.task.trade.required");
 
-        config.addBool("use_wanted_item", useWantedItem, v -> useWantedItem = v, false)
-                .setNameKey("qeb.task.trade.use_wanted_item");
-
-        config.addString("wanted_item", wantedItem, v -> wantedItem = v, DEFAULT_ITEM)
-                .setNameKey("qeb.task.trade.wanted_item");
-
+        // counts all villager trades (ignores profession filter)
         config.addBool("use_total", useTotal, v -> useTotal = v, false)
                 .setNameKey("qeb.task.trade.use_total");
 
-        config.addBool("use_wanted_item_output_count", useWantedItemCountMode, v -> useWantedItemCountMode = v, false)
-                .setNameKey("qeb.task.trade.use_wanted_item_output_count");
+        // enables (Wanted Item) for task
+        config.addBool("use_wanted_item", useWantedItem, v -> useWantedItem = v, false)
+                .setNameKey("qeb.task.trade.use_wanted_item");
+
+        // Wanted Item ID for task
+        config.addString("wanted_item", wantedItem, v -> wantedItem = v, DEFAULT_ITEM)
+                .setNameKey("qeb.task.trade.wanted_item");
+
+        // If True, use Input Wanted Trade Item, else use Output Wanted Trade Item
+        config.addBool("wanted_is_input", wantedIsInput, v -> wantedIsInput = v, false)
+                .setNameKey("qeb.task.trade.wanted_is_input");
+
+        // If True, Use Sum of (Wanted Item) for/from (Trade/Item Count)
+        config.addBool("use_wanted_item_count", useWantedItemCountMode, v -> useWantedItemCountMode = v, false)
+                .setNameKey("qeb.task.trade.use_wanted_item_count");
         }
 
     @Override
@@ -216,7 +274,9 @@ public class QebTradeTask extends Task {
 
         nbt.putBoolean("use_wanted_item", useWantedItem);
         nbt.putString("wanted_item", wantedItem);
-        nbt.putBoolean("use_wanted_item_output_count", useWantedItemCountMode);
+
+        nbt.putBoolean("wanted_is_input", wantedIsInput);
+        nbt.putBoolean("use_wanted_item_count", useWantedItemCountMode);
     }
 
     @Override
@@ -235,16 +295,18 @@ public class QebTradeTask extends Task {
         professionManual = nbt.contains("profession_manual")
                 ? nbt.getString("profession_manual")
                 : DEFAULT_PROF;
+
         useWantedItem = nbt.contains("use_wanted_item") && nbt.getBoolean("use_wanted_item");
         wantedItem = nbt.contains("wanted_item") ? nbt.getString("wanted_item") : DEFAULT_ITEM;
-        useWantedItemCountMode = nbt.contains("use_wanted_item_output_count") && nbt.getBoolean("use_wanted_item_output_count");
+
+        wantedIsInput = nbt.contains("wanted_is_input") && nbt.getBoolean("wanted_is_input");
+        useWantedItemCountMode = nbt.contains("use_wanted_item_count") && nbt.getBoolean("use_wanted_item_count");
 
         // sanitize
         if (required <= 0) required = 1;
         if (professionDropdown == null || professionDropdown.isBlank()) professionDropdown = DEFAULT_PROF;
         if (professionManual == null || professionManual.isBlank()) professionManual = DEFAULT_PROF;
         if (wantedItem == null || wantedItem.isBlank()) wantedItem = DEFAULT_ITEM;
-        if (wantedItem != null) wantedItem = wantedItem.trim();
-
+        wantedItem = wantedItem.trim();
     }
 }

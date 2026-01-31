@@ -6,10 +6,10 @@
   "qeb.task.trade.required.tooltip": "How many trades are needed to complete the task.",
 
   "qeb.task.trade.use_total": "Use Total Trades",
-  "qeb.task.trade.use_total.tooltip": "If enabled, counts all villager trades (ignores profession filter).",
+  "qeb.task.trade.use_total.tooltip": "If True, counts all villager trades (ignores profession filter).",
 
   "qeb.task.trade.use_dropdown": "Select Profession From List",
-  "qeb.task.trade.use_dropdown.tooltip": "If enabled, use the dropdown value. If disabled, use the manual field.",
+  "qeb.task.trade.use_dropdown.tooltip": "If True, use the dropdown value. If disabled, use the manual field.",
 
   "qeb.task.trade.profession_dropdown": "Profession (Dropdown)",
   "qeb.task.trade.profession_dropdown.tooltip": "Pick a profession ID from registered villager professions.",
@@ -17,15 +17,15 @@
   "qeb.task.trade.profession_manual": "Profession (Manual)",
   "qeb.task.trade.profession_manual.tooltip": "Type a profession ID like minecraft:librarian or mayview:librarian.",
 
-  "qeb.task.trade.use_wanted_item": "Output Item",
-  "qeb.task.trade.use_wanted_item.tooltip": "If enabled, use the Trade Output Item",
+  "qeb.task.trade.use_wanted_item": "Enable Wanted Item",
+  "qeb.task.trade.use_wanted_item.tooltip": "If True, use the Trade Wanted Item",
 
-  "qeb.task.trade.wanted_item": "Output Item",
-  "qeb.task.trade.wanted_item.tooltip": "Item ID of the trade output",
+  "qeb.task.trade.wanted_item": "Wanted Item",
+  "qeb.task.trade.wanted_item.tooltip": "Item ID of the wanted trade item",
 
-  "qeb.task.trade.use_wanted_item_output_count": "Output Item Count",
-  "qeb.task.trade.use_wanted_item_output_count.tooltip": "If enabled, use the Trade Success of Output",
+  "qeb.task.trade.wanted_is_input": "Enable Wanted Item Input",
+  "qeb.task.trade.wanted_is_input.tooltip": "If True, Use the Trade Input(Trade CostA/CostB) for Task.  If False, Use the Trade Output(Result) for Task",
 
-  "qeb.task.trade.wanted_item_output_count": "Output Item Count",
-  "qeb.task.trade.wanted_item_output_count.tooltip": "Item ID of the trade output"
+  "qeb.task.trade.use_wanted_item_count": "Enable Wanted Item Count",
+  "qeb.task.trade.use_wanted_item_count.tooltip": "If True, Use Sum of (Wanted Item) for (Trade/Item Count)"
 }

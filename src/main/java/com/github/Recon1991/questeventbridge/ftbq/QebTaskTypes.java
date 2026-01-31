@@ -7,14 +7,17 @@ import dev.ftb.mods.ftbquests.quest.task.TaskTypes;
 import net.minecraft.resources.ResourceLocation;
 
 public interface QebTaskTypes {
-    ResourceLocation ICON = ResourceLocation.fromNamespaceAndPath(
+    ResourceLocation TRADEICON = ResourceLocation.fromNamespaceAndPath(
             QuestEventBridge.MOD_ID, "textures/item/qeb_trade.png"
+    );
+    ResourceLocation FILTERICON = ResourceLocation.fromNamespaceAndPath(
+            QuestEventBridge.MOD_ID, "textures/item/qeb_filter.png"
     );
 
     TaskType TRADE = TaskTypes.register(
             ResourceLocation.fromNamespaceAndPath(QuestEventBridge.MOD_ID, "trade_task"),
             QebTradeTask::new,
-            () -> Icon.getIcon(ICON)
+            () -> Icon.getIcon(TRADEICON)
     );
 
     static void init() {
